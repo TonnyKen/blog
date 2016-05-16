@@ -116,7 +116,8 @@ router.get('/post', function (req, res) {
 router.post('/post', checkLogin);
 router.post('/post', function (req, res) {
   var currentUser = req.session.user,
-      post = new Post(currentUser.name, req.body.title, req.body.post);
+      tags = [req.body.tag1, req.body.tag2, req.body.tag3],
+      post = new Post(currentUser.name, req.body.title, tags, req.body.post);
   post.save(function (err) {
     if (err) {
       req.flash('error', err); 
@@ -126,6 +127,58 @@ router.post('/post', function (req, res) {
     res.redirect('/');//发表成功跳转到主页
   });
 });
+
+
+router.get('/archive', function (req, res) {
+  Post.getArchive(function (err, posts) {
+    if (err) {
+      req.flash('error', err); 
+      return res.redirect('/');
+    }
+    res.render('archive', {
+      title: '存档',
+      posts: posts,
+      user: req.session.user,
+      success: req.flash('success').toString(),
+      error: req.flash('error').toString()
+    });
+  });
+});
+
+
+router.get('/tags', function (req, res) {
+  Post.getTags(function (err, posts) {
+    if (err) {
+      req.flash('error', err);
+      return res.redirect('/');
+    }
+    res.render('tags', {
+      title: '标签',
+      posts: posts,
+      user: req.session.user,
+      success: req.flash('success').toString(),
+      error: req.flash('error').toString()
+    });
+  });
+});
+
+
+router.get('/tags/:tag', function (req, res) {
+  Post.getTag(req.params.tag, function (err, posts) {
+    if (err) {
+      req.flash('error',err); 
+      return res.redirect('/');
+    }
+    res.render('tag', {
+      title: 'TAG:' + req.params.tag,
+      posts: posts,
+      user: req.session.user,
+      success: req.flash('success').toString(),
+      error: req.flash('error').toString()
+    });
+  });
+});
+
 
 router.get('/u/:name', function(req, res) {
   User.get(req.params.name, function (err, user) {
@@ -170,7 +223,7 @@ router.get('/u/:name/:_id', function (req, res){
 router.get('/edit/:name/:_id', checkLogin);
 router.get('/edit/:name/:_id', function (req, res) {
   var currentUser = req.session.user;
-  Post.edit(req.params._id, function (err, post) {
+  Post.edit(req.params._id, currentUser.name, function (err, post) {
     if (err) {
       req.flash('error', err);
       return res.redirect('back');
@@ -187,8 +240,10 @@ router.get('/edit/:name/:_id', function (req, res) {
 
 router.post('/edit/:name/:_id', checkLogin);
 router.post('/edit/:name/:_id', function(req, res) {
-  var currentUser = req.session.user;
-  Post.update(req.params._id, req.body.title, req.body.post, function(err) {
+  var currentUser = req.session.user,
+      tags = [req.body.tag1, req.body.tag2, req.body.tag3];
+
+  Post.update(req.params._id, currentUser.name, req.body.title, tags, req.body.post, function(err) {
     var url = encodeURI('/u/' + currentUser.name+ '/' +req.params._id );
     if (err) {
       req.flash('error', err);
@@ -202,7 +257,7 @@ router.post('/edit/:name/:_id', function(req, res) {
 router.get('/remove/:name/:_id', checkLogin);
 router.get('/remove/:name/:_id', function(req, res) {
   var currentUser = req.session.user;
-  Post.remove(req.params._id, function(err) {
+  Post.remove(req.params._id, currentUser.name, function(err) {
     if (err) {
       req.flash('error', err);
       return res.redirect('back');
