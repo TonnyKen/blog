@@ -1,6 +1,6 @@
 # blog
 
-This is a blog for learing nodejs & mongod.
+This is a blog for learning nodejs & mongod.
 
 Here is the [tutorial](https://github.com/nswbmw/N-blog/wiki).
 
